@@ -1,0 +1,797 @@
+    <!DOCTYPE html>
+     
+    <html>
+        <head><meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.css">
+            <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+            <script src="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.js"></script>
+            <title>Middle Server Login</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width">
+            <style>
+                span{
+                display:none;
+                }
+                #searchSubmit1{
+                    display:none;
+                }
+                #searchDiv{
+                    display:none;
+                }
+                </style>
+                
+        </head>
+        <body onload="connect()">
+<!--#################################################################################################################################-->            
+           <div data-role="page" id="loginpage" style="background-color:#FFA500; clear:both;text-align:center;">
+           <div data-role="header">
+            <h1>Middle Server Login</h1>
+           </div>
+            <div id="container" style="background-color:#FFA500; width:300px; margin:0 auto;">
+                <table>
+                <tr>
+                  <td><p><b>User Name:</b></p></td>
+                  <td><input type="text" onkeypress="submitAll(event,'submitButton');" id="username" style="text-transform: lowercase;"/></td>
+                </tr>
+                <tr>
+                  <td> <p><b>Password:</b></p></td>
+                  <td><input type="password" onkeypress="submitAll(event,'submitButton');"  id="password_field"/></td>
+                </tr>
+                </table>
+                <div style="width:200px; margin:0 auto;">
+                <button type="button" id="submitButton" onclick="login();" >Login</button>
+            </div>
+            </div>
+            <div style="width:400px; margin:0 auto;text-align:center;">
+            <span id='notification'></span>
+            </div>
+            <div id="messages"></div>
+            <div data-role="footer" data-position="fixed">
+            <h1>Created by Matthew</h1>
+            </div>
+            </div>
+<!--#################################################################################################################################-->
+            <div data-role="page" id="ServerSettings">
+            <div data-role="header">
+                <a href="#loginpage" onclick="webSocketvar.close()" class="ui-btn ui-btn-right ui-shadow ui-corner-all ui-icon-back ui-btn-icon-right">Logout</a>
+            <h1>Middle Server Settings</h1>
+            </div>
+
+            <div data-role="main" class="ui-content">
+            <div class="ui-field-contain">
+              <a href="#UserDatabaseSettings" class="ui-btn ui-shadow ui-corner-all" data-transition="slideup">User Database Settings</a>
+              <a href="#ApplicationSettings" class="ui-btn ui-shadow ui-corner-all" data-transition="slidedown">Server Settings</a>
+             </div>
+
+            <div data-role="footer" data-position="fixed">
+            <h1>Created by Matthew</h1>
+            </div>
+          </div> 
+          </div> 
+<!--#################################################################################################################################-->
+            <div data-role="page" id="UserDatabaseSettings">
+            <div data-role="header">
+                <a href="#ServerSettings" class="ui-btn ui-btn-right ui-shadow ui-corner-all ui-icon-back ui-btn-icon-right">Back</a>
+            <h1>User Database Settings</h1>
+            </div>
+
+            <div data-role="main" class="ui-content">
+            <div class="ui-field-contain">
+                    <h3>Search, update, and delete user</h3>
+                    <hr>
+                    <input type="email" id="searchforuser" onkeypress="submitAll(event,'searchSubmit');" placeholder="Enter e-mail address of the user then press enter or button below." required /> 
+                    <div data-role="popup" id="empty" data-position-to="#searchforuser" >
+                    <p>Please enter email address to search.</p>
+                    </div>
+                    <div data-role="popup" id="notfound">
+                    
+                    </div>
+                    <button type="button" id="searchSubmit" onclick="userSearch();" >Search for user</button>
+                    <div id="searchDiv">
+                    <table id="userTable" data-role="table">
+                    <thead>
+                    <tr>
+                        <th>User ID</th> 
+                        <th>Password</th> 
+                        <th>Blocked?</th>
+                        <th>Number of tries</th> 
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="email" id="UserID" readonly="readonly"/></td>
+                            <td><input type="password" id="Password" placeholder="Leave empty if you do not need to update the password."/></td>
+                            <td>
+                                <fieldset class="ui-field-contain">
+                                <select id="Blocked" data-native-menu="false">
+                                    <option value='true'>True</option>
+                                    <option value='false'>False</option>
+                                </select>   
+                            </fieldset></td>
+                            <td><input type="number" id="Tries"/></td>
+                        </tr>
+                    </tbody> 
+                    </table>
+                    
+                    <button type="button" id="updateUser" onclick="updateUser();">Update user</button>
+                    <button type="button" id="cleanSearch" onclick="fadeOutTable();">Clean Search</button>
+                    <button type="button" id="deleteUser" onclick="removeUser();">Remove User</button>
+                    </div>
+                    <h3>Add new user</h3>
+                    <hr>
+                    <input type="email" id="newUserID" placeholder="Enter new User Name" onkeypress="submitAll(event,'addUser');"/>
+                    <input type="password" id="newPassword" placeholder="Enter Password for New User" onkeypress="submitAll(event,'addUser');"/>
+                    <button type="button" id="addUser" onclick="addUser();" >Add new user</button>
+                    <h3>Show all users</h3>
+                    <hr>
+                    <button type="button" id="showAll" onclick="showAll();" >Show all users</button>
+                    <hr>
+                </div>
+                <div data-role="footer" data-position="fixed">
+                <h1>Created by Matthew</h1>
+            </div> 
+          </div> 
+                
+<!--#################################################################################################################################-->
+<!--Pop-up which purpose is to re-login user back to the system-->
+
+            <div data-role="popup" id="yesNoPopUp" data-overlay-theme="b" data-theme="b" data-dismissible="false" style="max-width:400px;">
+                        <div data-role="header" data-theme="a">
+                        <h1>Delete Account?</h1>
+                        </div>
+                        <div role="main" class="ui-content">
+                            <h3 class="ui-title">Are you sure you want to delete this account?</h3>
+                        <p>This action cannot be undone.</p>
+                            <a class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" onclick="removeUserSend();">Delete</a>
+                            <a class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" data-transition="flow" >Cancel</a>
+                        </div>
+                    </div>          
+            </div>
+<!--#################################################################################################################################-->
+            <div data-role="page" id="ShowAllUsers">
+            <div data-role="header">
+                <a href="#UserDatabaseSettings" class="ui-btn ui-btn-right ui-shadow ui-corner-all ui-icon-back ui-btn-icon-right" onclick="tableCleanUp();">Back</a>
+            <h1>All Users</h1>
+            </div>
+
+            <div data-role="main" class="ui-content">
+            <div id="tableArea" class="ui-field-contain">
+                <table id="allUsersTable">
+                    
+                </table>
+              
+            </div>
+            </div>
+                <div data-role="footer" data-position="fixed">
+            <h1>Created by Matthew</h1>
+            </div> 
+          </div> 
+
+<!--#################################################################################################################################-->
+            <div data-role="page" id="ApplicationSettings">
+            <div data-role="header">
+                <a href="#ServerSettings" class="ui-btn ui-btn-right ui-shadow ui-corner-all ui-icon-back ui-btn-icon-right">Back</a>
+            <h1>Server Settings</h1>
+            </div>
+
+            <div data-role="main" class="ui-content">
+                <div class="ui-field-contain">
+                    <a href="#UserDatabaseCredentials" class="ui-btn ui-shadow ui-corner-all ui-icon-back" onclick="fieldUpdate('getUserDatabaseFields');">User Database Credentials</a>
+                    <a href="#AdminDatabaseCredentials" class="ui-btn ui-shadow ui-corner-all ui-icon-back" onclick="fieldUpdate('getAdminDatabaseFields');">Admin Database and System Credentials</a>
+             </div> 
+            <div data-role="footer" data-position="fixed">
+            <h1>Created by Matthew</h1>
+            </div>
+          </div>
+        </div>
+<!--#################################################################################################################################-->
+<div data-role="page" id="UserDatabaseCredentials" >
+            <div data-role="header">
+                <a href="#ApplicationSettings" class="ui-btn ui-btn-right ui-shadow ui-corner-all ui-icon-back ui-btn-icon-right">Back</a>
+            <h1>User Database Credentials</h1>
+            </div>
+            <div data-role="popup" id="notfound1">
+                    
+                    </div>
+            <div data-role="main" class="ui-content">
+            <div class="ui-field-contain">
+              <div class="ui-field-contain">
+                    <h3>User Database Address</h3>
+                        <hr>
+                        <input type="text" id="UserDatabaseAddress" onkeypress="submitAll(event,'UpdateUserDatabaseAddressButton');"/>
+                </div>
+                <div class="ui-field-contain">
+                    <h3>User database Name</h3>
+                        <hr>
+                        <input type="text" id="UserDatabaseName" onkeypress="submitAll(event,'UpdateUserDatabaseAddressButton');"/>
+                </div>   
+                <div class="ui-field-contain">
+                    <h3>User Database User Name</h3>
+                        <hr>
+                        <input type="text" id="UserDatabaseUsername" onkeypress="submitAll(event,'UpdateUserDatabaseUsernameButton');"/>
+                </div>
+                <div class="ui-field-contain">
+                    <h3>User Database Password</h3>
+                        <hr>
+                        <input type="Password" id="UserDatabasePassword" onkeypress="submitAll(event,'updateUserDatabasePasswordButton');" />
+                        <button type="button" id="UpdateUserDatabasePasswordButton" onclick="UpdateUserDatabaseCredentials();" >Update User Database Details</button>
+                </div>
+             </div>
+                    <div data-role="popup" id="yesNoPopUpUser" data-overlay-theme="b" data-theme="b" data-dismissible="false" style="max-width:400px;">
+                        <div data-role="header" data-theme="a">
+                        <h1>Database issue.</h1>
+                        </div>
+                        <div role="main" class="ui-content">
+                            <h3 class="ui-title">Database accessible but it is empty. Do you want to continue with the update?</h3>
+                            <a class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" onclick="updateUserDatabaseForSure();">Yes</a>
+                            <a class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" data-transition="flow" >No</a>
+                        </div>
+                    </div> 
+            <div data-role="footer" data-position="fixed">
+            <h1>Created by Matthew</h1>
+            </div>
+          </div> 
+          </div>
+<!--#################################################################################################################################-->
+            <div data-role="page" id="AdminDatabaseCredentials">
+            <div data-role="header">
+                <a href="#ApplicationSettings" class="ui-btn ui-btn-right ui-shadow ui-corner-all ui-icon-back ui-btn-icon-right">Back</a>
+            <h1>Admin Database and System Credentials</h1>
+            </div>
+            <div data-role="popup" id="notfound2">
+                    
+                    </div>
+            <div data-role="main" class="ui-content">
+            <div class="ui-field-contain">
+                <h3>Update Admin System Password</h3>
+                    <hr>
+                    <input type="password" id="adminPassword" placeholder="Enter new admin password" onkeypress="submitAll(event,'updatePassword');"/>
+                    <button type="button" id="updatePassword" onclick="updateAdminPassword();" >Update Password</button>
+            </div>
+            <div class="ui-field-contain">
+                    <h3>Admin Database Address</h3>
+                        <hr>
+                        <input type="text" id="AdminDatabaseAddress" onkeypress="submitAll(event,'UpdateAdminDatabaseAddressButton');"/>
+                </div> 
+                <div class="ui-field-contain">
+                    <h3>Admin Database Name</h3>
+                        <hr>
+                        <input type="text" id="AdminDatabaseName" onkeypress="submitAll(event,'UpdateAdminDatabaseAddressButton');"/>
+                </div> 
+                <div class="ui-field-contain">
+                    <h3>Admin Database User Name</h3>
+                        <hr>
+                        <input type="text" id="AdminDatabaseUsername" onkeypress="submitAll(event,'UpdateUserDatabaseUsernameButton');"/>
+                </div>
+                <div class="ui-field-contain">
+                    <h3>Admin Database Password</h3>
+                        <hr>
+                        <input type="Password" id="AdminDatabasePassword" onkeypress="submitAll(event,'UpdateAdminDatabasePasswordButton');" />
+                        <button type="button" id="UpdateAdminDatabasePasswordButton" onclick="UpdateAdminDatabaseCredentials();" >Update Admin Database Details</button>
+                </div>
+            <div data-role="popup" id="yesNoPopUpAdmin" data-overlay-theme="b" data-theme="b" data-dismissible="false" style="max-width:400px;">
+                        <div data-role="header" data-theme="a">
+                        <h1>Database issue.</h1>
+                        </div>
+                        <div role="main" class="ui-content">
+                            <h3 class="ui-title">Database accessible but it is empty. If you would like to continue please enter new Admin ID and new Password and press Submit button to continue with the update.</h3>
+                            <input name="user" id="newAdminUserUpdate" placeholder="username" data-theme="a" type="text">
+                            <input name="pass" id="newAdminPasswordUpdate" placeholder="password" data-theme="a" type="password">
+                            <a class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" onclick="updateAdminDatabaseForSure();">Submit</a>
+                            <a class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" data-transition="flow" >No</a>
+                        </div>
+                    </div>
+            <div data-role="footer" data-position="fixed">
+            <h1>Created by Matthew</h1>
+            </div>
+          </div> 
+          </div>
+<!--#################################################################################################################################-->
+            <div data-role="page" id="ServerSetupUserDatabase">
+            <div data-role="header">
+            <h1>Server Setup 1/3</h1>
+            </div>
+
+            <div data-role="main" class="ui-content">
+            <div class="ui-field-contain">
+              <h4>Hi, you see this page because either your system is missing configuration file, or database check failed.</h4>
+              <h4>Please start by checking status of your databases, check configuration file which is located in your Glassfish folder under domains/domain1/config/config.txt.</h4>
+              <h4>If you are unable to find your configuration file, do not worry, follow below directions and enter your databases details.</h4>
+              <hr>
+              <h3>Please enter your user database details.</h3>
+              <hr>
+              <input type="text" id="SetupUserDatabaseAddress" onkeypress="submitAll(event,'firstPageSubmitButton');" placeholder="Enter User Database address including database directory"/>
+              <input type="text" id="SetupUserDatabaseName" onkeypress="submitAll(event,'firstPageSubmitButton');" placeholder="Enter Name of User Database "/>
+              <input type="text" id="SetupUserDatabaseUser" onkeypress="submitAll(event,'firstPageSubmitButton');" placeholder="Enter User Database User Name"/>
+              <input type="text" id="SetupUserDatabasePassword" onkeypress="submitAll(event,'firstPageSubmitButton');" placeholder="Enter User Database Password"/>
+              <button type="button" id="firstPageSubmitButton" onclick="checkFields('page1');">Next</button>
+             </div>
+                <div data-role="popup" id="fieldMissingPage1">
+                    <p>One of the fields is empty, please enter missing details.</p>
+                    </div>
+            </div> 
+            <div data-role="footer" data-position="fixed">
+            <h1>Created by Matthew</h1>
+            </div>
+        </div>
+<!--#################################################################################################################################-->
+            <div data-role="page" id="ServerSetupAdminDatabase">
+            <div data-role="header">
+            <h1>Server Setup 2/3</h1>
+            </div>
+
+            <div data-role="main" class="ui-content">
+            <div class="ui-field-contain">
+              <h3>Please enter your Admin database details.</h3>
+              <hr>
+              <input type="text" id="SetupAdminDatabaseAddress" onkeypress="submitAll(event,'secondPageSubmitButton');" placeholder="Enter Admin Database address including database directory"/>
+              <input type="text" id="SetupAdminDatabaseName" onkeypress="submitAll(event,'secondPageSubmitButton');" placeholder="Enter Name of Admin Database"/>
+              <input type="text" id="SetupAdminDatabaseUser" onkeypress="submitAll(event,'secondPageSubmitButton');" placeholder="Enter Admin Database User Name"/>
+              <input type="text" id="SetupAdminDatabasePassword" onkeypress="submitAll(event,'secondPageSubmitButton');" placeholder="Enter Admin Database Password"/>
+              <button type="button" id="secondPageSubmitButton" onclick="checkFields('page2');">Submit Setup</button>
+              <a href="#ServerSetupUserDatabase" class="ui-btn">Back</a>
+             </div>
+                <div data-role="popup" id="fieldMissingPage2">
+                    <p>One of the fields is empty, please enter missing details.</p>
+                    </div>
+            </div>
+            <div data-role="footer" data-position="fixed">
+            <h1>Created by Matthew</h1>
+            </div>
+          </div>
+<!--#################################################################################################################################-->
+            <div data-role="page" id="ServerSetupAdminName">
+            <div data-role="header">
+            <h1>Server Setup 3/3</h1>
+            </div>
+
+            <div data-role="main" class="ui-content">
+            <div class="ui-field-contain">
+              <h3>Please enter your Admin User Name.</h3>
+              <hr>
+              <input type="text" id="AdminUserName" onkeypress="submitAll(event,'thirdPageSubmitButton');" placeholder="Enter Admin User Name"/>
+              <input type="password" id="AdminPassword" onkeypress="submitAll(event,'thirdPageSubmitButton');" placeholder="Enter Admin Password"/>
+              <button type="button" id="thirdPageSubmitButton" onclick="checkFields('page3');">Submit Admin Details</button>
+              <a href="#ServerSetupAdminDatabase" class="ui-btn">Back</a>
+             </div>
+                <div data-role="popup" id="fieldMissingPage3">
+                    <p>One of the fields is empty, please enter missing details.</p>
+                    </div>
+            </div>
+            <div data-role="footer" data-position="fixed">
+            <h1>Created by Matthew</h1>
+            </div>
+          </div>
+<!--#################################################################################################################################-->
+            <script type="text/javascript">
+                    $(window).bind('beforeunload',function(){
+                      $('#searchforuser').val('');
+                    return;
+                    });   
+                   $(document).ready(function(){
+                    $("input").focus(function(){
+                      $(this).css("background-color","#cccccc");
+                    });
+                    $("input").blur(function(){
+                      $(this).css("background-color","#ffffff");
+                    });
+                  });
+                var webSocketvar;//variable which is used for purpose of sending data to the server
+                var messages = document.getElementById("messages");
+                var timeout = 0;
+                var adminUser="nouser";//AdminsID
+                var token="notoken";//admins token
+                var confirmUserRemoval;
+//#######################################################################################################################################              
+//Function which updates user database when new user database is empty.                   
+                function updateUserDatabaseForSure(){
+                                    var field0= document.getElementById("UserDatabaseAddress").value;
+                                    var field1= document.getElementById("UserDatabaseName").value;
+                                    var field2 = document.getElementById("UserDatabaseUsername").value;
+                                    var field3 = document.getElementById("UserDatabasePassword").value;
+                                    if((field0.length===0)||(field1.length===0)||(field2.length===0)||(field3.length===0)){
+                                        $("#notfound1").html("<p>One of the fields is empty, please fill in missing details.</p>").popup("open");
+                                    }else{
+                                        var buf = ["updateUserDatabaseForSure",field0,field1,field2,field3,adminUser,token];
+                                        send(buf);
+                                    }
+                }
+
+//#######################################################################################################################################              
+//Function which will pick up details required to update user database credentials.             
+                    function UpdateUserDatabaseCredentials(){
+                                    var field0= document.getElementById("UserDatabaseAddress").value;
+                                    var field1= document.getElementById("UserDatabaseName").value;
+                                    var field2 = document.getElementById("UserDatabaseUsername").value;
+                                    var field3 = document.getElementById("UserDatabasePassword").value;
+                                    if((field0.length===0)||(field1.length===0)||(field2.length===0)||(field3.length===0)){
+                                        $("#notfound1").html("<p>One of the fields is empty, please fill in missing details.</p>").popup("open");
+                                    }else{
+                                        var buf = ["userDatabaseCredentialsUpdate",field0,field1,field2,field3,adminUser,token];
+                                        send(buf);
+                                    }
+                    }
+//#######################################################################################################################################              
+//Function which updates user database when new admin database is empty.                   
+                function updateAdminDatabaseForSure(){
+                        var field0= document.getElementById("AdminDatabaseAddress").value;
+                        var field1= document.getElementById("AdminDatabaseName").value;
+                        var field2 = document.getElementById("AdminDatabaseUsername").value;
+                        var field3 = document.getElementById("AdminDatabasePassword").value;
+                        var field4 = document.getElementById("newAdminUserUpdate").value;
+                        var field5 = document.getElementById("newAdminPasswordUpdate").value;
+                        if((field0.length===0)||(field1.length===0)||(field2.length===0)||(field3.length===0)){
+                            $("#notfound2").html("<p>One of the fields is empty, please fill in missing details.</p>").popup("open");
+                            }else if((field4.length===0)||(field5.length===0)){
+                            $("#notfound2").html("<p>Please enter new admin ID and password.</p>").popup("open"); 
+                            }else{
+                                var buf = ["updateAdminDatabaseForSure",field0,field1,field2,field3,field4,field5,adminUser,token];
+                                send(buf);
+                            }
+                }                    
+//#######################################################################################################################################              
+//Function which will pick up details required to update admin database credentials.             
+                    function UpdateAdminDatabaseCredentials(){
+                        var field0= document.getElementById("AdminDatabaseAddress").value;
+                        var field1= document.getElementById("AdminDatabaseName").value;
+                        var field2 = document.getElementById("AdminDatabaseUsername").value;
+                        var field3 = document.getElementById("AdminDatabasePassword").value;
+                        if((field0.length===0)||(field1.length===0)||(field2.length===0)||(field3.length===0)){
+                                        $("#notfound2").html("<p>One of the fields is empty, please fill in missing details.</p>").popup("open");
+                                    }else{
+                                        var buf = ["adminDatabaseCredentialsUpdate",field0,field1,field2,field3,adminUser,token];
+                                        send(buf);
+                                    }
+                    }
+                        
+//#######################################################################################################################################              
+//Purpose of this Function is to check if fields on setup page are filded in 
+                    var field0;
+                    var field1;
+                    var field2;
+                    var field3;
+                    var field4;
+                    var field5;
+                    var field6;
+                    var field7;
+                    var field8;
+                    var field9;
+                    function checkFields(page){
+                    
+                    switch(page) {
+                            case 'page1':
+                                    field0= document.getElementById("SetupUserDatabaseAddress").value;
+                                    field1= document.getElementById("SetupUserDatabaseName").value;
+                                    field2 = document.getElementById("SetupUserDatabaseUser").value;
+                                    field3 = document.getElementById("SetupUserDatabasePassword").value;
+                                        if((field0.length===0)||(field1.length===0)||(field2.length===0)||(field3.length===0)){
+                                            $("#fieldMissingPage1").popup("open");
+                                        }else{
+                                        $("body").pagecontainer("change", "#ServerSetupAdminDatabase", { transition: 'flip' });
+                                    }
+                                    
+                                break;
+                            case 'page2':
+                                    field4 = document.getElementById("SetupAdminDatabaseAddress").value;
+                                    field5 = document.getElementById("SetupAdminDatabaseName").value;
+                                    field6 = document.getElementById("SetupAdminDatabaseUser").value;
+                                    field7 = document.getElementById("SetupAdminDatabasePassword").value;
+                                        if((field4.length===0)||(field5.length===0)||(field6.length===0)||(field7.length===0)){
+                                            $("#fieldMissingPage2").popup("open");
+                                        }else{
+                                        var buf = ["config",field0,field1,field2,field3,field4,field5,field6,field7];
+                                        send(buf);
+                                    }
+                                break;
+                            case 'page3':  
+                                    field8 = document.getElementById("AdminUserName").value;
+                                    field9 = document.getElementById("AdminPassword").value;
+                                        if((field8.length===0)||(field9.length===0)){
+                                            $("#fieldMissingPage3").popup("open");
+                                        }else{
+                                        var buf = ["newAdminCredentials",field8,field9];
+                                        send(buf);
+                                    }
+                                break;
+                        }
+                     
+                }
+//#######################################################################################################################################   
+                function fieldUpdate(data){
+                    var buf=[data,adminUser,token];
+                    send(buf);
+                }
+//#######################################################################################################################################              
+//Purpose of this Function is to fadeout a table and buttons, when close search button was pressed
+                function fadeOutTable(){
+                     $('#searchDiv').fadeOut(1);
+                     $('#searchforuser').val('');
+                     
+                }
+//#######################################################################################################################################
+//Function which purpose is to check if server is avaiable and to provide login packet data, or to try to reconnect to the server             
+                function login(){
+                    if(webSocketvar.readyState === webSocketvar.CLOSED){
+                        connect();
+                        setTimeout(function() {
+                        if(webSocketvar.readyState===webSocketvar.OPEN){
+                        var user = document.getElementById("username").value.toLowerCase();
+                        var password = document.getElementById("password_field").value;
+                        loginsend("Login",user,password);
+                        }else{
+                            if(timout===5){
+                                document.getElementById("notification").innerHTML="Timeout";
+                                $("span").css("display","inline");
+                            }else{
+                                timeout=timeout+1;
+                                login();   
+                            }
+                        }}, 1000); 
+                    }else{
+                       var user = document.getElementById("username").value;
+                       var password = document.getElementById("password_field").value;
+                       loginsend("Login",user,password); 
+                    }
+                }
+//#######################################################################################################################################              
+//Function which purpose is to collect all the re-login variables and send them away to server.                
+                function reLogin(){
+                    var user = document.getElementById("un").value;
+                    var password = document.getElementById("pw").value;
+                    loginsend("reLogin",user,password); 
+                }
+//#######################################################################################################################################
+//Function which purpose is to submit login packet to send function
+                function loginsend(type,user,password){
+                    var buf = [type,user,password]; 
+                    send(buf);
+                }
+//#######################################################################################################################################
+//Function which purpose is to submit search packet to send function
+                function userSearch(){
+                    var searchValue = document.getElementById("searchforuser").value;
+                    if(searchValue.length!==0){
+                        var buf = ["Search",searchValue,adminUser,token];  
+                        send(buf);
+                    }else{
+                         $("#empty").popup("open");
+                    }
+                }
+//#######################################################################################################################################
+//Function which will add new user to database             
+                function addUser(){
+                    var user = document.getElementById("newUserID").value.toLowerCase();
+                    var password = document.getElementById("newPassword").value;
+                    if((user.length===0)||password.length===0){
+                        $("#notfound").html("<p>Either User or Password field is empty.</p>").popup("open");
+                    }else{
+                      var buf = ["newUser",user,password,adminUser,token];
+                      send(buf);
+                    }
+                }
+//#######################################################################################################################################
+//Function which will add new user to database             
+                function showAll(){                
+                    var buf = ["showAll",adminUser,token];
+                    send(buf);
+                }
+//#######################################################################################################################################
+//Function which will remove user from database             
+                function removeUser(){
+                    $("#yesNoPopUp").popup("open");
+                }
+//#######################################################################################################################################
+//
+                function removeUserSend(type,user,password){
+                    var userToBeRemoved=document.getElementById("UserID").value;
+                    var buf = ["removeUser",userToBeRemoved,adminUser,token];
+                    send(buf);
+                    fadeOutTable(); 
+                }                
+//#######################################################################################################################################
+//Purpose of this Function is to collect updated data and send user details update packet to server
+                function updateUser(){
+                    var user = document.getElementById("UserID").value;
+                    var password = document.getElementById("Password").value;
+                    if(password.length===0){
+                        password="no_update";
+                    }
+                    var blocked = document.getElementById("Blocked").value;
+                    var tries = document.getElementById("Tries").value;
+                    if(tries < 0){
+                        $("#notfound").html("<p>Tries value cannot be lower than 0</p>").popup("open");
+                    }else{
+                        var buf = ["userUpdate",user,password,blocked,tries,adminUser,token];
+                        send(buf); 
+                    }
+                    
+                }
+//#######################################################################################################################################
+//Function which allows to update admin's password
+                function updateAdminPassword(){
+                    var newPassword=document.getElementById("adminPassword").value;
+                    var buf = ["updateAdminPassword",newPassword,adminUser,token];
+                    send(buf);
+                }
+//#######################################################################################################################################
+//Purpose of this function is to process enter key being pressed and press appropriate button for user
+                function submitAll(e,elementID){
+                    if (typeof e === 'undefined' && window.event) { e = window.event; }
+                    if (e.keyCode === 13)
+                    {
+                        document.getElementById(elementID).click();
+                    }
+                }
+//#######################################################################################################################################              
+//Function which purpose is to allow user to press enter of input field and perform action which is to submit login                
+                function tableCleanUp(){
+                    $("#allUsersTable").empty();
+                }                
+//#######################################################################################################################################
+//Function which is used for all the communication between webpage and server and vice versa 
+             function connect(){
+                     try{
+                         if(webSocketvar !== undefined && webSocketvar.readyState !== webSocketvar.CLOSED){
+                        return;
+                        }
+                        var url = window.location.host;
+                         webSocketvar = new WebSocket("ws://"+url+"/MiddleServer/start");
+                         webSocketvar.onopen = function(){
+                         };
+                         webSocketvar.onmessage = function(msg){
+                             var rawdata = msg.data;
+                             var processdata = rawdata.split(',');
+                             switch(processdata[0]) {
+                            case 'pass':
+                                adminUser = $('#username').val();
+                                token = processdata[1];
+                                $("span").css("display","inline");
+                                $("body").pagecontainer("change", "#ServerSettings", { transition: 'flip' }); 
+                                break;
+                            case 'repass':
+                                adminUser = $('#un').val();
+                                token = processdata[1];
+                                $("#PopUp").popup("close");
+                                break;
+                            case 'refail':
+                                $("body").pagecontainer("change", "#loginpage", { transition: 'flip' });
+                                break;
+                            case 'fail':
+                                document.getElementById("notification").innerHTML="Wrong Username or Password";
+                                $("span").css("display","inline");
+                                break;
+                            case 'searchResult':
+                                $('#searchDiv').fadeIn(1000);
+                                $("#UserID").val(processdata[1]);
+                                if(processdata[2]==="true"){
+                                   $("#Blocked").val('true').change();
+                                }else if(processdata[2]==="false"){
+                                    $("#Blocked").val('false').change();
+                                }
+                                $("#Tries").val(processdata[3]);
+                                break;
+                            case 'notFound':
+                                    $("#notfound").html("<p>No record found, please try again.</p>").popup("open");
+                                break;
+                            case 'UserUpdated':
+                                    $("#notfound").html("<p>User Details Updated.</p>").popup("open");
+                                break;
+                            case 'AuthFailed':
+                                    ShowPopUp();
+                                break;
+                            case 'allUsers':
+                                
+                                $("body").pagecontainer("change", "#ShowAllUsers", { transition: 'flip' });
+                                var arrayLength=processdata.length;
+                                var index=processdata[arrayLength-1];
+                                var size=0;
+                                $("#allUsersTable").append('<thead><tr><th>User ID</th><th>Blocked?</th><th>Number of tries</th></tr></thead>');  
+                                for(i = 1; i <= index; i++){
+                                    $("#allUsersTable").append('<tr><td>'+processdata[size+1]+'</td>'+'<td>'+processdata[size+2]+'</td>'+'<td>'+processdata[size+3]+'</td></tr>');
+                                    size=size+3;
+                                }
+                                break;
+                            case 'file_not_avaiable':
+                            case 'testFailed':
+                                    $("body").pagecontainer("change", "#ServerSetupUserDatabase", { transition: 'flip' }); 
+                                break;
+                            case 'userDatabaseDetails':
+                                    $("#UserDatabaseAddress").val(processdata[1]).change();
+                                    $("#UserDatabaseName").val(processdata[2]).change();
+                                    $("#UserDatabaseUsername").val(processdata[3]).change();
+                                break;
+                            case 'adminDatabaseDetails':
+                                 
+                                  $("#AdminDatabaseAddress").val(processdata[1]).change();
+                                  $("#AdminDatabaseName").val(processdata[2]).change();
+                                  $("#AdminDatabaseUsername").val(processdata[3]).change();
+                                break;
+                            case 'userDbTestCompleted':
+                                $("#notfound1").html("<p>Update Completed.</p>").popup("open");   
+                                break;
+                            case 'user_database_error':
+                                $("#notfound1").html("<p>"+processdata[1]+"</p>").popup("open");
+                                break;
+                            case 'USER_DB_OK_NO_DATA':
+                                $("#yesNoPopUpUser").popup("open");   
+                                break;
+                            case 'adminDbTestCompleted':
+                                $("#notfound2").html("<p>Update Completed.</p>").popup("open");   
+                                break;
+                             case 'admin_database_error':
+                                $("#notfound2").html("<p>"+processdata[1]+"</p>").popup("open");   
+                                break;
+                            case 'ADMIN_DB_OK_NO_DATA':
+                                $("#yesNoPopUpAdmin").popup("open");   
+                                break;
+                            case 'newUserDBAdded':
+                                if(processdata[1]==="newAdminDBAdded"){
+                                    infoPopUp("Databases are accessible by system and configuration file was created.");
+                                    $("body").pagecontainer("change", "#ServerSetupAdminName", { transition: 'flip' }); 
+                                }else if(processdata[1]==="admin_database_error"){
+                                    infoPopUp(processdata[2]);
+                                }
+                                break;
+                            case 'userDBInitialError':
+                                    $("body").pagecontainer("change", "#ServerSetupUserDatabase", { transition: 'flip' }); 
+                                    infoPopUp(processdata[2]);
+                                break;
+                            case 'UserNameAdded':
+                                    $("body").pagecontainer("change", "#loginpage", { transition: 'flip' });
+                                break;
+                            case 'AdminPasswordUpdated':
+                                    infoPopUp("Password updated.");
+                                break;
+                            case 'AdminPasswordUpdatedFail':
+                                    infoPopUp("Password update failed, please try again, or check status of your database.");
+                                break;
+                            case 'wrongCredentials':
+                                    infoPopUp("Incorrect credentials please try again.");
+                            break;
+                            }
+                            
+                            
+                         };
+                         webSocketvar.onclose = function(){
+                         };
+                     } catch(exception){
+   		 writeResponse("<p>Error"+exception);
+                }
+             }
+             function infoPopUp(data){
+                if($("#infoPopUp").length > 0)
+                $("#infoPopUp").remove();
+                var id = $.mobile.activePage.attr("id");
+                $("#" + id).append("<div data-role='popup' id='infoPopUp' data-theme='a' class='ui-corner-all'></div>");
+                $("#infoPopUp").html("<p>"+data+"</p>");
+                $("#" + id ).trigger('create');
+                $("#infoPopUp").popup("open");
+             }             
+//shows popup with request to re-login, when connection to the server is lost
+             function ShowPopUp(){
+                if($("#PopUp").length > 0)
+                $("#PopUp").remove();
+                var id = $.mobile.activePage.attr("id");
+                $("#" + id).append("<div data-role='popup' id='PopUp' data-theme='a' class='ui-corner-all' data-dismissible='false'></div>");
+                $("#PopUp").html("<div style='padding:10px 20px;'><h3>Please re-Login</h3>\n\
+                            <input name='user' id='un' placeholder='username' data-theme='a' type='text' onkeypress='submitAll(event,"+"&#39;submitReLogin&#39;"+");'>\n\
+                            <input name='pass' id='pw' placeholder='password' data-theme='a' type='password' onkeypress='submitAll(event,"+"&#39;submitReLogin&#39;"+");'>\n\
+                            <button type='submit' id='submitReLogin' class='ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check' onclick='reLogin();'>re-Login</button></div>");
+                $("#" + id ).trigger('create');
+                $("#PopUp").popup("open");
+             }
+             
+//#######################################################################################################################################
+//Function which is used for purpose of sending everything from this web application
+               function send(data){
+                    webSocketvar.send(data);
+                }
+//#######################################################################################################################################
+                
+    function writeResponse(text){
+                    messages.innerHTML += "<br/>" + text;
+                }
+               
+            </script>          
+        </body>
+    </html>
